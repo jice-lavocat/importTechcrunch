@@ -1,4 +1,5 @@
 from feedData import feed2data
+from contentProcessing import html2flat, translateHtml
 import json
 import os, errno
 import datetime
@@ -71,7 +72,9 @@ for article in data["items"]:
 		art = g.extract(article["link"])
 
 
-		goose = {"title" : art.title, "content": art.content_html}
+		flatContent = html2flat(art.content_html)
+		frenchContent = translateHtml(flatContent)
+		goose = {"title" : art.title, "content": art.content_html, "flatContent" : flatContent, "frenchContent": frenchContent}
 
 
 		article["goose"] = goose

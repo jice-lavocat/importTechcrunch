@@ -1,2 +1,4 @@
 feedparser==5.2.1
 -e git://github.com/tanzaho/python-goose.git#egg=gooseTanzaho
+py-translate==1.0.3
+futures
