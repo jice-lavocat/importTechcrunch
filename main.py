@@ -77,8 +77,7 @@ for article in data["items"]:
 		g = Goose()
 		art = g.extract(article["link"])
 
-
-		flatContent = html2flat(art.content_html)
+		flatContent = html2flat(art.content_html.decode('ascii', 'ignore'))
 		frenchContent = translateHtml(flatContent)
 		goose = {"title" : art.title, "content": art.content_html, "flatContent" : flatContent, "frenchContent": frenchContent}
 

@@ -33,7 +33,7 @@ def translateHtml(html):
 			cleanedParagraph = re.sub('<[^>]*>', '', currentParagraph) #we remove all tags
 			translatedPara = translator('en', 'fr', cleanedParagraph)
 			if not isinstance(translatedPara[0], int):
-				returnedPara = "<" + elem.tag +">"+translatedPara[0][0][0]+"</" + elem.tag +">"
+				returnedPara = "<" + elem.tag +">"+(translatedPara[0][0][0]).encode('ascii', 'xmlcharrefreplace')+"</" + elem.tag +">"
 				contentTranslated += returnedPara
 		else:
 			contentTranslated += etree.tostring(elem)
