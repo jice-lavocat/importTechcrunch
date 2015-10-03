@@ -1,5 +1,5 @@
 from feedData import feed2data
-from contentProcessing import html2flat, translateHtml
+from contentProcessing import html2flat, translateHtml, data2Hugo, translateStr
 import json
 import os, errno
 import datetime
@@ -53,8 +53,10 @@ data = feed2data(urlTechcrunch)
 mkdir_p(os.path.join(".", "data"))
 metaDataPath = os.path.join(".", "data", "metadata")
 articlePath = os.path.join(".", "data", "articles")
+#savePath = os.path.join(".", "data", "hugo")
 mkdir_p(metaDataPath)
 mkdir_p(articlePath)
+#mkdir_p(savePath)
 
 # We keep only one file per hour
 fileName = data["last_update"].strftime("%Y-%m-%d_%H") + ".json"
@@ -64,7 +66,10 @@ dumpInFile(filePath, data)
 
 for article in data["items"]:
 	fileName = article["slug"] + ".json"
-	filePath = os.path.join(articlePath, fileName)
+	fileFolder = os.path.join(articlePath, article["slug"])
+	mkdir_p(fileFolder) 
+
+	filePath = os.path.join(fileFolder, fileName)
 	# Add file if not existing yet
 	if not os.path.isfile(filePath):
 		# import the article via Goose
@@ -74,12 +79,19 @@ for article in data["items"]:
 
 		flatContent = html2flat(art.content_html)
 		frenchContent = translateHtml(flatContent)
-		goose = {"title" : art.title, "content": art.content_html, "flatContent" : flatContent, "frenchContent": frenchContent}
+		frenchTitle = translateStr(article["title"])
+		goose = {"title" : art.title, "content": art.content_html, "flatContent" : flatContent, "frenchContent": frenchContent, "titre": frenchTitle}
 
 
 		article["goose"] = goose
 
-		dumpInFile(filePath, article)
+		dumpInFile(filePath, article) #save all metadata
+
+		data2Hugo(article, fileFolder) #turns an article to hugo syntax
+	# if file already exists, maybe we don't want to import, but post process only
 	else:
+		with open(filePath) as fd:
+			article = json.loads(fd.read())
+		data2Hugo(article, fileFolder) #turns an article to hugo syntax
 		pass
 print "Done"

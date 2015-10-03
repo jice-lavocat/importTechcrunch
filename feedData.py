@@ -42,6 +42,12 @@ def feed2data(url):
 			if "gravatar" not in img["url"]:
 				images.append(img["url"])
 
+		# thumbnail
+		if entry["media_thumbnail"] is not None:
+			thumbnail = entry["media_thumbnail"][0]["url"]
+		else:
+			thumbnail = None
+
 		# Tags
 		tags = []
 		for tag in entry["tags"]:
@@ -50,7 +56,8 @@ def feed2data(url):
 		# Slug 
 		slug = published_time.strftime("%Y-%m-%d")+"_"+"-".join(title.split())
 
-		entryDict = {"slug": slug, "published_time": published_time, "link": link, "title": title, "author": author, "tags":tags, "images":images}
+		entryDict = {"slug": slug, "published_time": published_time, "link": link, "title": title, "author": author,
+					 "tags":tags, "images":images, "thumbnail": thumbnail}
 		items.append(entryDict)
 
 	result["items"] = items
