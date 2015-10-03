@@ -1,5 +1,5 @@
 from feedData import feed2data
-from contentProcessing import html2flat, translateHtml, data2Hugo, translateStr
+from contentProcessing import html2flat, translateHtml, data2Hugo, translateStr, getFrenchSlug
 import json
 import os, errno
 import datetime
@@ -72,6 +72,7 @@ for article in data["items"]:
 	filePath = os.path.join(fileFolder, fileName)
 	# Add file if not existing yet
 	if not os.path.isfile(filePath):
+		print "Going Goose"
 		# import the article via Goose
 		g = Goose()
 		art = g.extract(article["link"])
@@ -79,11 +80,15 @@ for article in data["items"]:
 
 		flatContent = html2flat(art.content_html)
 		frenchContent = translateHtml(flatContent)
-		frenchTitle = translateStr(article["title"])
-		goose = {"title" : art.title, "content": art.content_html, "flatContent" : flatContent, "frenchContent": frenchContent, "titre": frenchTitle}
-
+		goose = {"title" : art.title, "content": art.content_html, "flatContent" : flatContent, "frenchContent": frenchContent}
 
 		article["goose"] = goose
+
+		# French Element
+		frenchTitle = translateStr(article["title"])
+		article["titre"] = frenchTitle
+		# Slug 
+		article["frenchSlug"] = getFrenchSlug(article)
 
 		dumpInFile(filePath, article) #save all metadata
 

@@ -1,5 +1,6 @@
 import re
 import os
+import urllib
 from translate import translator
 import lxml.html
 from lxml import etree
@@ -37,10 +38,23 @@ def translateHtml(html):
 			contentTranslated += etree.tostring(elem)
 	return contentTranslated
 
+def getFrenchSlug(article):
+	""" 
+	From an article, returns the Frehcn slug
+	Here, "published_time is a datetime
+	"""
+	# only alphanumeric
+	titre = re.sub(r'\W+', ' ', article["titre"].encode('ascii','ignore')) # only alphanumeric
+	slug = article["published_time"].strftime('%Y-%m-%d')+"_"+"-".join(titre.split())
+	slug = slug.lower() # lowercase
+	slug = re.sub("-+", "-", slug) # Replace several dashes by only one dash
+	return slug
+
 def data2Hugo(article, fileFolder):
 	"""
 	Uses the metadata to create a valid Hugo file
 	"""
+	from main import mkdir_p
 	filename = os.path.join(fileFolder, article["slug"] + ".md")
 	with open(filename, 'w') as outfile:
 		# Metadata
@@ -57,12 +71,29 @@ def data2Hugo(article, fileFolder):
 		outfile.write("tags: " + tagsHugo + "\n")
  
 		#Date
-		humanDate = datetime.fromtimestamp(int(article["published_time"])/1000.0)
+		#humanDate = datetime.fromtimestamp(int(article["published_time"])/1000.0)
+		if isinstance(article["published_time"], datetime):
+			humanDate = article["published_time"]
+		else:
+			humanDate = datetime.fromtimestamp((article["published_time"])/1000.0)
 		humanDate = humanDate.strftime('%Y-%m-%d')
 		outfile.write("date: " + humanDate + "\n")
 
 		# Categories
 		outfile.write("categories: [actualites] \n")
+
+		# Thumbnail
+		if "thumbnail" in article:
+			thumbnail = article["thumbnail"]
+			thumbPath = os.path.join(fileFolder, "thumbnails")
+			mkdir_p(thumbPath)
+			thumbFilename = os.path.join(thumbPath, article["slug"] + ".jpg")
+			thumbFilenameNoExt = os.path.join(fileFolder, "thumbnails", article["slug"])
+			thumbFolder = os.path.join(fileFolder, "thumbnails")
+			#urllib.urlretrieve(thumbnail,thumbFolder)
+			with open(thumbFilename, 'wb') as thumbfile:
+				thumbfile.write(urllib.urlopen(thumbnail).read())
+			print "Image saved under " + str(thumbPath)
 
 		outfile.write("---\n\n")
 		outfile.write("jice")
