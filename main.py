@@ -53,7 +53,8 @@ mkdir_p(os.path.join(".", "data"))
 metaDataPath = os.path.join(".", "data", "metadata")
 mkdir_p(metaDataPath)
 
-fileName = data["last_update"].strftime("%Y-%m-%d_%H-%M") + ".json"
+# We keep only one file per hour
+fileName = data["last_update"].strftime("%Y-%m-%d_%H") + ".json"
 filePath = os.path.join(metaDataPath, fileName)
 
 dumpInFile(filePath, data)

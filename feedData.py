@@ -47,7 +47,10 @@ def feed2data(url):
 		for tag in entry["tags"]:
 			tags.append(tag.term)
 
-		entryDict = {"published_time": published_time, "link": link, "title": title, "author": author, "tags":tags, "images":images}
+		# Slug 
+		slug = published_time.strftime("%Y-%m-%d")+"_"+"-".join(title.split())
+
+		entryDict = {"slug": slug, "published_time": published_time, "link": link, "title": title, "author": author, "tags":tags, "images":images}
 		items.append(entryDict)
 
 	result["items"] = items
