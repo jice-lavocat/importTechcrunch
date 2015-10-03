@@ -25,7 +25,7 @@ def dumpInFile(path, jsonData):
 	indent = 3
 	with open(path, 'w') as outfile:
 	    json.dump(jsonData, outfile, indent=indent, default=default)
-	    #print unicode(path) + " : created"
+	    print unicode(path) + " : created"
 
 def default(obj):
     """Default JSON serializer."""
@@ -51,11 +51,22 @@ data = feed2data(urlTechcrunch)
 # Save meta data to file
 mkdir_p(os.path.join(".", "data"))
 metaDataPath = os.path.join(".", "data", "metadata")
+articlePath = os.path.join(".", "data", "articles")
 mkdir_p(metaDataPath)
+mkdir_p(articlePath)
 
 # We keep only one file per hour
 fileName = data["last_update"].strftime("%Y-%m-%d_%H") + ".json"
 filePath = os.path.join(metaDataPath, fileName)
 
 dumpInFile(filePath, data)
+
+for article in data["items"]:
+	fileName = article["slug"] + ".json"
+	filePath = os.path.join(articlePath, fileName)
+	# Add file if not existing yet
+	if not os.path.isfile(filePath):
+		dumpInFile(filePath, article)
+	else:
+		pass
 print "Done"
