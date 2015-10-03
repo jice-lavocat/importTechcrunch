@@ -26,7 +26,7 @@ def translateHtml(html):
 	"""
 	contentParsed = lxml.html.fromstring(html)
 	contentTranslated = ""
-	for elem in contentParsed:
+	for ind, elem in enumerate(contentParsed):
 		#if elem.tag in ["p", "blockquote", "span"]
 		if elem.tag in ["p", "h1", "h2", "h3", "h4", "h5", "blockquote"]:
 			currentParagraph = etree.tostring(elem)
@@ -36,7 +36,9 @@ def translateHtml(html):
 				returnedPara = "<" + elem.tag +">"+(translatedPara[0][0][0]).encode('ascii', 'xmlcharrefreplace')+"</" + elem.tag +">"
 				contentTranslated += returnedPara
 		else:
-			contentTranslated += etree.tostring(elem)
+			if not (elem.tag=="img" and ind==0):
+				print str(elem.tag) + " : " + str(ind)
+				contentTranslated += etree.tostring(elem)
 	return contentTranslated
 
 def getFrenchSlug(article):
@@ -62,7 +64,10 @@ def data2Hugo(article, fileFolder):
 		outfile.write("---\n")
 		
 		#Titre
-		outfile.write('title: ' + article["title"].encode('utf-8') +"\n")
+		if "titre" in article:
+			outfile.write('title: ' + article["titre"].encode('utf-8') +"\n")
+		else:
+			outfile.write('title: ' + article["title"].encode('utf-8') +"\n")
 		
 		#Layout
 		outfile.write("layout: post\n")
@@ -94,10 +99,31 @@ def data2Hugo(article, fileFolder):
 			thumbFilename = os.path.join(thumbPath, article["frenchSlug"] + ext)
 
 			#urllib.urlretrieve(thumbnail,thumbFolder)
-			with open(thumbFilename, 'wb') as thumbfile:
-				thumbfile.write(urllib.urlopen(thumbnail).read())
-			print "Image saved under " + str(thumbPath)
+			if not os.path.isfile(thumbFilename): # !if image does not exist yet
+				with open(thumbFilename, 'wb') as thumbfile:
+					thumbfile.write(urllib.urlopen(thumbnail).read())
+				print "Image saved under " + unicode(thumbPath)
 
+			# thumbnails in /images/thumbs/
+			thumbStaticFilePath = os.path.join("images", "thumbs",  article["frenchSlug"] + ext)
+			outfile.write("thumbnail: /" + thumbStaticFilePath +"\n")
+
+		#Teaser image
+		imgTeaser = article["images"][0]
+		path = urlparse.urlparse(imgTeaser).path
+		ext = os.path.splitext(path)[1]
+
+		teaserPath = os.path.join(fileFolder, "teaser")	
+		mkdir_p(teaserPath)	
+		teaserFilename = os.path.join(teaserPath, article["frenchSlug"] + ext)
+		if not os.path.isfile(teaserFilename): # !if image does not exist yet
+				with open(teaserFilename, 'wb') as imgFile:
+					imgFile.write(urllib.urlopen(imgTeaser).read())
+				print "Image saved under " + unicode(imgTeaser)
+
+		# thumbnails in /images/thumbs/
+		teaserStaticFilePath = os.path.join("images", "teaser",  article["frenchSlug"] + ext)
+		outfile.write("teaserImage: /" + teaserStaticFilePath +"\n")
 
 		# Images
 
