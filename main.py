@@ -2,7 +2,7 @@ from feedData import feed2data
 import json
 import os, errno
 import datetime
-
+from goose import Goose
 
 """ Utils """
 """"""""""""""
@@ -66,6 +66,16 @@ for article in data["items"]:
 	filePath = os.path.join(articlePath, fileName)
 	# Add file if not existing yet
 	if not os.path.isfile(filePath):
+		# import the article via Goose
+		g = Goose()
+		art = g.extract(article["link"])
+
+
+		goose = {"title" : art.title, "content": art.content_html}
+
+
+		article["goose"] = goose
+
 		dumpInFile(filePath, article)
 	else:
 		pass
