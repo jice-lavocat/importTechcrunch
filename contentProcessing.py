@@ -5,6 +5,7 @@ from translate import translator
 import lxml.html
 from lxml import etree
 from datetime import datetime
+import urlparse
 
 def html2flat(html):
 	""" Takes html and return clean html where :
@@ -87,13 +88,19 @@ def data2Hugo(article, fileFolder):
 			thumbnail = article["thumbnail"]
 			thumbPath = os.path.join(fileFolder, "thumbnails")
 			mkdir_p(thumbPath)
-			thumbFilename = os.path.join(thumbPath, article["slug"] + ".jpg")
-			thumbFilenameNoExt = os.path.join(fileFolder, "thumbnails", article["slug"])
-			thumbFolder = os.path.join(fileFolder, "thumbnails")
+
+			path = urlparse.urlparse(thumbnail).path
+			ext = os.path.splitext(path)[1]
+			thumbFilename = os.path.join(thumbPath, article["frenchSlug"] + ext)
+
 			#urllib.urlretrieve(thumbnail,thumbFolder)
 			with open(thumbFilename, 'wb') as thumbfile:
 				thumbfile.write(urllib.urlopen(thumbnail).read())
 			print "Image saved under " + str(thumbPath)
 
+
+		# Images
+
+
 		outfile.write("---\n\n")
-		outfile.write("jice")
+		outfile.write(article["goose"]["frenchContent"].encode('ascii', 'xmlcharrefreplace'))
