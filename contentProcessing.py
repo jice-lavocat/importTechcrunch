@@ -105,7 +105,7 @@ def data2Hugo(article, fileFolder):
 				print "Image saved under " + unicode(thumbPath)
 
 			# thumbnails in /images/thumbs/
-			thumbStaticFilePath = os.path.join("images", "thumbs",  article["frenchSlug"] + ext)
+			thumbStaticFilePath = os.path.join("images", "thumbnails",  article["frenchSlug"] + ext)
 			outfile.write("thumbnail: /" + thumbStaticFilePath +"\n")
 
 		#Teaser image
