@@ -53,6 +53,23 @@ def getFrenchSlug(article):
 	slug = re.sub("-+", "-", slug) # Replace several dashes by only one dash
 	return slug
 
+def string2Slug(s):
+	# only alphanumeric
+	s = re.sub(r'\W+', ' ', s.encode('ascii','ignore')) # only alphanumeric
+	s = s.lower() # lowercase
+	s = re.sub(" +", "-", s) # Replace several dashes by only one dash
+	s = re.sub("-+", "-", s) # Replace several dashes by only one dash
+	return s
+
+def getAuthorNameTechCrunch(html):
+	"""
+	From a techcrunch article, extracts the author name
+	"""
+	contentParsed = lxml.html.fromstring(html)
+	authorName = contentParsed.xpath('//a[@rel="author"]/text()')[0]
+	authorSlug = string2Slug(authorName)
+	return (authorName, authorSlug)
+
 def data2Hugo(article, fileFolder):
 	"""
 	Uses the metadata to create a valid Hugo file
