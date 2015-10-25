@@ -3,9 +3,11 @@ import os
 import urllib
 from translate import translator
 import lxml.html
+import requests
 from lxml import etree
 from datetime import datetime
 import urlparse
+import goslate
 
 def html2flat(html):
 	""" Takes html and return clean html where :
@@ -18,7 +20,10 @@ def html2flat(html):
 	return cleanHtml
 
 def translateStr(string):
-	return translator('en', 'fr', string)[0][0][0]
+	gs = goslate.Goslate()
+	result= gs.translate(string, 'fr', source_language='en')
+	# return translator('en', 'fr', string)[0][0][0]
+	return result
 
 def translateHtml(html):
 	"""
@@ -68,7 +73,38 @@ def getAuthorNameTechCrunch(html):
 	contentParsed = lxml.html.fromstring(html)
 	authorName = contentParsed.xpath('//a[@rel="author"]/text()')[0]
 	authorSlug = string2Slug(authorName)
-	return (authorName, authorSlug)
+	authorUrl = contentParsed.xpath('//a[@rel="author"]//@href')[0]
+	if authorUrl[0]=="/":
+		authorUrl = "http://techcrunch.com" + authorUrl
+	author = {"name": authorName, "slug": authorSlug, "url": authorUrl}
+	return author
+
+def importAuthor(author):
+	"""
+	Import data for author=author
+	"""
+	authorHtml = (requests.get(author["url"])).text
+	contentParsed = lxml.html.fromstring(authorHtml)
+	authorJson = {}
+
+	description = contentParsed.xpath("//div[@class='profile-text text']/p/text()")
+	finalDescription = ""
+	for sentence in description:
+		if "techcrunch" not in sentence.lower():
+			finalDescription += sentence
+
+	authorJson["description"] = finalDescription
+	try:
+		authorTwitter = contentParsed.xpath("//div[@class='profile cf']//a[contains(@href, 'twitter')]/@href")[0]
+	except:
+		authorTwitter = None
+	authorJson["twitter"] = authorTwitter
+	return authorJson
+	if finalDescription!= "":
+		authorJson["frenchDescription"] = translateStr(finalDescription)
+	else:
+		authorJson["frenchDescription"] = ""
+	return authorJson
 
 def data2Hugo(article, fileFolder):
 	"""
@@ -77,6 +113,7 @@ def data2Hugo(article, fileFolder):
 	from main import mkdir_p
 	filename = os.path.join(fileFolder, article["slug"] + ".md")
 	with open(filename, 'w') as outfile:
+
 		# Metadata
 		outfile.write("---\n")
 		

@@ -54,9 +54,11 @@ data = feed2data(urlTechcrunch)
 mkdir_p(os.path.join(".", "data"))
 metaDataPath = os.path.join(".", "data", "metadata")
 articlePath = os.path.join(".", "data", "articles")
+authorPath = os.path.join(".", "data", "authors")
 #savePath = os.path.join(".", "data", "hugo")
 mkdir_p(metaDataPath)
 mkdir_p(articlePath)
+mkdir_p(authorPath)
 #mkdir_p(savePath)
 
 # We keep only one file per hour
@@ -92,8 +94,17 @@ for article in data["items"]:
 		# article["frenchSlug"] = contentProcessing.getFrenchSlug(article)
 
 		# Extract author
-		(name, token) = contentProcessing.getAuthorNameTechCrunch(raw_html)
-		print name, token 
+		author = contentProcessing.getAuthorNameTechCrunch(raw_html)
+		article["author"] = author
+		print author
+
+		# Let's import the author if we don't have it
+		fileAuthor = os.path.join(authorPath, author["slug"] + ".json")
+		if not os.path.isfile(fileAuthor):
+			authorJson = contentProcessing.importAuthor(author)
+			print authorJson
+			# dumpInFile(fileAuthor, authorJson)
+
 
 		# # Save data
 		# dumpInFile(filePath, article) #save all metadata
