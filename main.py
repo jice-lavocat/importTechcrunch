@@ -78,20 +78,20 @@ for article in data["items"]:
 		print "Going Goose"
 		# import the article via Goose
 		raw_html = (requests.get(article["link"])).text
-		# g = Goose()
-		# art = g.extract(raw_html=raw_html)
+		g = Goose()
+		art = g.extract(raw_html=raw_html)
 
-		# flatContent = contentProcessing.html2flat(art.content_html.decode('ascii', 'ignore'))
-		# frenchContent = contentProcessing.translateHtml(flatContent)
-		# goose = {"title" : art.title, "content": art.content_html, "flatContent" : flatContent, "frenchContent": frenchContent}
+		flatContent = contentProcessing.html2flat(art.content_html.decode('ascii', 'ignore'))
+		frenchContent = contentProcessing.translateHtml(flatContent)
+		goose = {"title" : art.title, "content": art.content_html, "flatContent" : flatContent, "frenchContent": frenchContent}
 
-		# article["goose"] = goose
+		article["goose"] = goose
 
-		# # French Element
-		# frenchTitle = contentProcessing.translateStr(article["title"])
-		# article["titre"] = frenchTitle
-		# # Slug 
-		# article["frenchSlug"] = contentProcessing.getFrenchSlug(article)
+		# French Element
+		frenchTitle = contentProcessing.translateStr(article["title"])
+		article["titre"] = frenchTitle
+		# Slug 
+		article["frenchSlug"] = contentProcessing.getFrenchSlug(article)
 
 		# Extract author
 		author = contentProcessing.getAuthorNameTechCrunch(raw_html)
@@ -103,17 +103,17 @@ for article in data["items"]:
 		if not os.path.isfile(fileAuthor):
 			authorJson = contentProcessing.importAuthor(author)
 			print authorJson
-			# dumpInFile(fileAuthor, authorJson)
+			dumpInFile(fileAuthor, authorJson)
 
 
 		# # Save data
-		# dumpInFile(filePath, article) #save all metadata
+		dumpInFile(filePath, article) #save all metadata
 
-		# contentProcessing.data2Hugo(article, fileFolder) #turns an article to hugo syntax
+		contentProcessing.data2Hugo(article, fileFolder) #turns an article to hugo syntax
 	# if file already exists, maybe we don't want to import, but post process only
 	else:
 		with open(filePath) as fd:
 			article = json.loads(fd.read())
-		# contentProcessing.data2Hugo(article, fileFolder) #turns an article to hugo syntax
+		contentProcessing.data2Hugo(article, fileFolder) #turns an article to hugo syntax
 		pass
 print "Done"

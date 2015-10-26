@@ -8,6 +8,29 @@ from lxml import etree
 from datetime import datetime
 import urlparse
 import goslate
+import time
+import random
+
+def getOpener():
+	""" 
+	Return fake user agent
+	"""
+	import urllib2
+	opener = urllib2.build_opener()
+	headers = [{'User-Agent','Mozilla/5.0 (Windows NT 6.1; WOW64; rv:12.0) Gecko/20100101 Firefox/12.0'},
+	{'User-Agent','Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.8.1.6) Gecko/20070725 Firefox/2.0.0.6'},
+	{'User-Agent','Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Trident/6.0; Touch)'},
+	{'User-Agent','Mozilla/5.0 (Linux; U; Android 4.0.4; en-gb; GT-I9300 Build/IMM76D) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30'},
+	{'User-Agent','Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:38.0) Gecko/20100101 Firefox/38.0'},
+	{'User-Agent','Mozilla/5.0 ;Windows NT 6.1; WOW64; Trident/7.0; rv:11.0; like Gecko'},
+	{'User-Agent','Mozilla/5.0 ;Windows NT 6.2; WOW64; rv:27.0; Gecko/20100101 Firefox/27.0'},
+	{'User-Agent','Mozilla/5.0 (X11; U; Linux i686; en-US) AppleWebKit/534.3 (KHTML, like Gecko) Chrome/6.0.472.63 Safari/534.3'},
+	{'User-agent', 'Mozilla/5.0'}]
+	header = random.choice(headers)
+	print "Using header : %s" % header
+	opener.addheaders = [header]
+	return opener
+
 
 def html2flat(html):
 	""" Takes html and return clean html where :
@@ -19,8 +42,17 @@ def html2flat(html):
 
 	return cleanHtml
 
+def going2Sleep():
+	randi = random.randint(3,15)
+	print "Going to sleep for %s seconds" % randi
+	time.sleep(randi)
+	return None
+
+
 def translateStr(string):
-	gs = goslate.Goslate()
+	opener = getOpener()
+	gs = goslate.Goslate(opener = opener, debug=True)
+	going2Sleep()
 	result= gs.translate(string, 'fr', source_language='en')
 	# return translator('en', 'fr', string)[0][0][0]
 	return result
@@ -28,22 +60,51 @@ def translateStr(string):
 def translateHtml(html):
 	"""
 	Translate EN html to FR html via Google Translapte api
+	We split the text for each paragraph and block of text
+	Each blob is stored in a list, and the html is re-written with replacement elements
+	So <p>lorem ipsum</p><p>blabla orum</p> becomes <p>{{--1--}}</p><p>{{--2--}}</p>
+	Then, translate is given the list of blobs : translate(list_text, "fr")
+	The resulting list is used to replace {{--xx--}} in the original html
 	"""
+
 	contentParsed = lxml.html.fromstring(html)
 	contentTranslated = ""
+	replaceId = 0
+	textList = []
+	opener = getOpener()
+	gs = goslate.Goslate(opener = opener, debug=True)
 	for ind, elem in enumerate(contentParsed):
 		#if elem.tag in ["p", "blockquote", "span"]
-		if elem.tag in ["p", "h1", "h2", "h3", "h4", "h5", "blockquote"]:
+		if elem.tag in ["p", "h1", "h2", "h3", "h4", "h5", "blockquote"]: # if tag contains text
 			currentParagraph = etree.tostring(elem)
-			cleanedParagraph = re.sub('<[^>]*>', '', currentParagraph) #we remove all tags
-			translatedPara = translator('en', 'fr', cleanedParagraph)
-			if not isinstance(translatedPara[0], int):
-				returnedPara = "<" + elem.tag +">"+(translatedPara[0][0][0]).encode('ascii', 'xmlcharrefreplace')+"</" + elem.tag +">"
-				contentTranslated += returnedPara
+			cleanedParagraph = re.sub('<[^>]*>', '', currentParagraph) # we remove all tags from the current element
+			textList.append(cleanedParagraph) # we had the raw text to the list that will be tranlated
+
+			#translatedPara = translator('en', 'fr', cleanedParagraph)
+			#if not isinstance(translatedPara[0], int):
+			#	# returnedPara = "<" + elem.tag +">"+(translatedPara[0][0][0]).encode('ascii', 'xmlcharrefreplace')+"</" + elem.tag +">"
+			returnedPara = "<" + elem.tag +">{--"+ str(replaceId) +"--}</" + elem.tag +">"
+			contentTranslated += returnedPara
+			replaceId += 1
 		else:
-			if not (elem.tag=="img" and ind==0):
+			if not (elem.tag=="img" and ind==0): #we remove the first picture (already took it via goose)
 				print str(elem.tag) + " : " + str(ind)
-				contentTranslated += etree.tostring(elem)
+				contentTranslated += etree.tostring(elem) #add the element without further process
+
+	# Translate the paragraphs
+	going2Sleep()
+	if textList != []:
+		transState = gs.translate(textList, 'fr', source_language='en')
+		translatedBlobs = list(transState)
+
+	if len(translatedBlobs) != len(textList):
+		raise Exception("Problem during translation - we got a different number of paragraph fromthe translation")
+
+	for elem in translatedBlobs: #we should have the same number of translations than the replacement patterns
+		ind = translatedBlobs.index(elem)
+		replacementPattern = "{{--" + str(ind) + "--}}"
+		re.sub(replacementPattern, elem, contentTranslated)
+
 	return contentTranslated
 
 def getFrenchSlug(article):
@@ -99,7 +160,11 @@ def importAuthor(author):
 	except:
 		authorTwitter = None
 	authorJson["twitter"] = authorTwitter
-	return authorJson
+	try:
+		authorLinkedin = contentParsed.xpath("//div[@class='profile cf']//a[contains(@href, 'linkedin')]/@href")[0]
+	except:
+		authorLinkedin = None
+	authorJson["linkedin"] = authorLinkedin
 	if finalDescription!= "":
 		authorJson["frenchDescription"] = translateStr(finalDescription)
 	else:
