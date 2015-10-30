@@ -43,7 +43,7 @@ def html2flat(html):
 	return cleanHtml
 
 def going2Sleep():
-	randi = random.randint(3,15)
+	randi = random.randint(15,50)
 	print "Going to sleep for %s seconds" % randi
 	time.sleep(randi)
 	return None
