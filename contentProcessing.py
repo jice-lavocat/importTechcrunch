@@ -24,8 +24,8 @@ def getOpener():
 	{'User-Agent','Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:38.0) Gecko/20100101 Firefox/38.0'},
 	{'User-Agent','Mozilla/5.0 ;Windows NT 6.1; WOW64; Trident/7.0; rv:11.0; like Gecko'},
 	{'User-Agent','Mozilla/5.0 ;Windows NT 6.2; WOW64; rv:27.0; Gecko/20100101 Firefox/27.0'},
-	{'User-Agent','Mozilla/5.0 (X11; U; Linux i686; en-US) AppleWebKit/534.3 (KHTML, like Gecko) Chrome/6.0.472.63 Safari/534.3'},
-	{'User-agent', 'Mozilla/5.0'}]
+	{'User-Agent','Mozilla/5.0 (X11; U; Linux i686; en-US) AppleWebKit/534.3 (KHTML, like Gecko) Chrome/6.0.472.63 Safari/534.3'}]
+	#,	{'User-agent', 'Mozilla/5.0'}]
 	header = random.choice(headers)
 	print "Using header : %s" % header
 	opener.addheaders = [header]
@@ -43,7 +43,7 @@ def html2flat(html):
 	return cleanHtml
 
 def going2Sleep():
-	randi = random.randint(15,50)
+	randi = random.randint(25,50)
 	print "Going to sleep for %s seconds" % randi
 	time.sleep(randi)
 	return None
@@ -73,6 +73,8 @@ def translateHtml(html):
 	textList = []
 	opener = getOpener()
 	gs = goslate.Goslate(opener = opener, debug=True)
+
+	# Extract the paragraphs and headings to translate them in batch
 	for ind, elem in enumerate(contentParsed):
 		#if elem.tag in ["p", "blockquote", "span"]
 		if elem.tag in ["p", "h1", "h2", "h3", "h4", "h5", "blockquote"]: # if tag contains text
@@ -83,7 +85,7 @@ def translateHtml(html):
 			#translatedPara = translator('en', 'fr', cleanedParagraph)
 			#if not isinstance(translatedPara[0], int):
 			#	# returnedPara = "<" + elem.tag +">"+(translatedPara[0][0][0]).encode('ascii', 'xmlcharrefreplace')+"</" + elem.tag +">"
-			returnedPara = "<" + elem.tag +">{--"+ str(replaceId) +"--}</" + elem.tag +">"
+			returnedPara = "<" + elem.tag +">{{--"+ str(replaceId) +"--}}</" + elem.tag +">"
 			contentTranslated += returnedPara
 			replaceId += 1
 		else:
@@ -100,10 +102,19 @@ def translateHtml(html):
 	if len(translatedBlobs) != len(textList):
 		raise Exception("Problem during translation - we got a different number of paragraph fromthe translation")
 
+	print "translated blobs :"
+	print translatedBlobs
+
 	for elem in translatedBlobs: #we should have the same number of translations than the replacement patterns
+		print "We should replace element :"
+		print translatedBlobs.index(elem)
 		ind = translatedBlobs.index(elem)
 		replacementPattern = "{{--" + str(ind) + "--}}"
-		re.sub(replacementPattern, elem, contentTranslated)
+		print "replacement pattern is : "
+		print replacementPattern
+		contentTranslated = re.sub(replacementPattern, elem, contentTranslated)
+		print "="*5
+		print contentTranslated
 
 	return contentTranslated
 
@@ -193,7 +204,7 @@ def data2Hugo(article, fileFolder):
 
 		#Tags
 		tagsHugo = "['" + "','".join(article["tags"]) + "']"
-		outfile.write("tags: " + tagsHugo + "\n")
+		outfile.write( ("tags: " + tagsHugo + "\n").encode('ascii', 'ignore')  )
  
 		#Date
 		#humanDate = datetime.fromtimestamp(int(article["published_time"])/1000.0)
